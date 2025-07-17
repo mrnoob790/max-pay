@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Install Max Pay</title>
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+  <h1>Install Max Pay</h1>
+  <button id="install">Register Payment Handler</button>
+  <script>
+    document.getElementById('install').onclick = async () => {
+      if ('serviceWorker' in navigator) {
+        const reg = await navigator.serviceWorker.register('sw.js');
+        await navigator.serviceWorker.ready;
+
+        if (reg.paymentManager) {
+          await reg.paymentManager.instruments.set('maxpay', {
+            name: 'Max Pay Default Card',
+            method: 'https://mrnoob790.github.io/max-pay/payment-manifest.json',
+          });
+          alert('Max Pay instrument registered!');
+        } else {
+          alert('PaymentManager not supported in this browser.');
+        }
+      }
+    };
+  </script>
+</body>
+</html>
