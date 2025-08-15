@@ -1,39 +1,37 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-  body { font-family: sans-serif; padding: 1rem; }
-  button { font-size: 1rem; padding: 0.5rem 1rem; }
-  #status { margin-top: 1rem; color: #444; }
-  img { max-width: 100%; margin-top: 1rem; display: none; }
-</style>
+<title>Google + File Picker</title>
 </head>
 <body>
-  <h1>Prepare to upload a photo</h1>
-  <p>
-    Click "Prepare" (this registers your intent). You can switch to another tab and
-    when you come back within a few seconds the file picker will open automatically.
-  </p>
-
-  <button id="prepareBtn">Prepare to upload</button>
-  <button id="openNowBtn">Open picker now</button>
-
-  <div id="status">Idle</div>
-  <img id="preview" alt="preview" />
+<button id="startBtn">Open Google & File Picker</button>
 
 <script>
-(() => {
-  const prepareBtn = document.getElementById('prepareBtn');
-  const openNowBtn = document.getElementById('openNowBtn');
-  const status = document.getElementById('status');
-  const preview = document.getElementById('preview');
+document.getElementById("startBtn").addEventListener("click", async () => {
+    // 1. Google tab open करो
+    window.open("https://www.google.com", "_blank");
 
-  // How long after user activation we allow auto-open on visibility change (ms).
-  const ACTIVATION_EXPIRY_MS = 5000; // e.g. 5 seconds
+    // 2. 1 second delay दो, लेकिन promise chain में user gesture maintain करो
+    await new Promise(r => setTimeout(r, 1000));
 
-  // Timestamp of last explicit user activation (ms since epoch), or 0.
-  let lastUserActivation = 0;
+    // 3. File picker open करो
+    try {
+        const [fileHandle] = await window.showOpenFilePicker({
+            types: [{
+                description: "Images",
+                accept: {"image/*": [".png", ".jpg", ".jpeg", ".gif"]}
+            }]
+        });
+        const file = await fileHandle.getFile();
+        alert(`Selected file: ${file.name}`);
+    } catch (e) {
+        console.log("Picker canceled or blocked:", e);
+    }
+});
+</script>
+</body>
+</html>
 
   // Save a small user intent when user clicks "Prepare".
   prepareBtn.addEventListener('click', (e) => {
