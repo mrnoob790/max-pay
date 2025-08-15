@@ -1,0 +1,107 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body { font-family: sans-serif; padding: 1rem; }
+  button { font-size: 1rem; padding: 0.5rem 1rem; }
+  #status { margin-top: 1rem; color: #444; }
+  img { max-width: 100%; margin-top: 1rem; display: none; }
+</style>
+</head>
+<body>
+  <h1>Prepare to upload a photo</h1>
+  <p>
+    Click "Prepare" (this registers your intent). You can switch to another tab and
+    when you come back within a few seconds the file picker will open automatically.
+  </p>
+
+  <button id="prepareBtn">Prepare to upload</button>
+  <button id="openNowBtn">Open picker now</button>
+
+  <div id="status">Idle</div>
+  <img id="preview" alt="preview" />
+
+<script>
+(() => {
+  const prepareBtn = document.getElementById('prepareBtn');
+  const openNowBtn = document.getElementById('openNowBtn');
+  const status = document.getElementById('status');
+  const preview = document.getElementById('preview');
+
+  // How long after user activation we allow auto-open on visibility change (ms).
+  const ACTIVATION_EXPIRY_MS = 5000; // e.g. 5 seconds
+
+  // Timestamp of last explicit user activation (ms since epoch), or 0.
+  let lastUserActivation = 0;
+
+  // Save a small user intent when user clicks "Prepare".
+  prepareBtn.addEventListener('click', (e) => {
+    lastUserActivation = Date.now();
+    status.textContent = 'Prepared. Switch tabs and come back within 5s to auto-open picker.';
+    // Optionally give visual feedback that activation is consumed later,
+    // but we keep timestamp so visibilitychange can use it.
+  });
+
+  // Also allow immediate open (regular user gesture).
+  openNowBtn.addEventListener('click', async (e) => {
+    status.textContent = 'Opening picker...';
+    try {
+      const [handle] = await window.showOpenFilePicker({
+        types: [{ accept: { 'image/*': ['.png', '.jpg', '.jpeg', '.webp'] } }],
+        multiple: false
+      });
+      const file = await handle.getFile();
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = 'block';
+      status.textContent = `Selected: ${file.name}`;
+    } catch (err) {
+      status.textContent = `Picker cancelled / blocked: ${err.name}`;
+      console.error(err);
+    }
+  });
+
+  // When tab becomes visible, check if we have a recent user activation.
+  document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState !== 'visible') return;
+
+    const now = Date.now();
+    if (lastUserActivation === 0) {
+      // No prior intent.
+      status.textContent = 'Visible — no prepared upload intent.';
+      return;
+    }
+
+    if ((now - lastUserActivation) > ACTIVATION_EXPIRY_MS) {
+      // Activation expired.
+      status.textContent = 'Prepared intent expired. Click Prepare again to enable auto-open.';
+      lastUserActivation = 0;
+      return;
+    }
+
+    // We have a recent user activation — attempt to open picker.
+    status.textContent = 'Auto-opening picker (based on your recent intent)...';
+    try {
+      const [handle] = await window.showOpenFilePicker({
+        types: [{ accept: { 'image/*': ['.png', '.jpg', '.jpeg', '.webp'] } }],
+        multiple: false
+      });
+      const file = await handle.getFile();
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = 'block';
+      status.textContent = `Selected: ${file.name}`;
+    } catch (err) {
+      status.textContent = `Picker cancelled / blocked: ${err.name}`;
+      console.error(err);
+    } finally {
+      // Clear the activation so it can't be reused.
+      lastUserActivation = 0;
+    }
+  });
+
+  // Optional: clear activation when user navigates away or interacts with other controls.
+  window.addEventListener('pagehide', () => { lastUserActivation = 0; });
+})();
+</script>
+</body>
+</html>
