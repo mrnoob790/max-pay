@@ -1,0 +1,18 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Open Samsung Calculator</title>
+</head>
+<body>
+  <h2>Open Samsung Calculator</h2>
+  <button onclick="openCalculator()">Open Calculator</button>
+
+  <script>
+    function openCalculator() {
+      var url = "intent://com.sec.android.app.popupcalculator#Intent;scheme=android-app;end";
+      window.location.href = url;
+    }
+  </script>
+</body>
+</html>
