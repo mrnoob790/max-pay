@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Demo Login Panel (Safe PoC)</title>
+<style>
+    html,body {
+        height:100%; margin:0; font-family:system-ui,Segoe UI,Roboto;
+        display:flex; justify-content:center; align-items:center;
+        background:#f2f6ff;
+    }
+    .panel {
+        width:90%; max-width:380px; padding:28px;
+        border-radius:12px; background:#fff;
+        box-shadow:0 8px 28px rgba(0,0,0,0.15);
+    }
+    .panel h2 {
+        margin:0 0 18px; font-size:22px; text-align:center;
+    }
+    .field {
+        margin-bottom:16px;
+    }
+    input {
+        width:100%; padding:10px 12px; border-radius:8px;
+        border:1px solid #aaa; font-size:14px;
+    }
+    button {
+        width:100%; padding:12px; border-radius:8px;
+        border:0; background:black; color:white;
+        font-size:16px; cursor:pointer;
+    }
+    #warning {
+        margin-top:16px; padding:12px;
+        color:#a00000; font-weight:700;
+        text-align:center; display:none;
+        background:#ffeaea; border:1px solid #ffb3b3; border-radius:8px;
+    }
+</style>
+</head>
+<body>
+
+<div class="panel">
+    <h2>Sign In</h2>
+
+    <div class="field">
+        <input id="email" placeholder="Email" autocomplete="off">
+    </div>
+
+    <div class="field">
+        <input id="password" type="password" placeholder="Password" autocomplete="off">
+    </div>
+
+    <button id="loginBtn">Submit</button>
+
+    <div id="warning">
+        ⚠️ Your credentials are in danger (Demo)<br>
+        This login panel is NOT real — this is a fullscreen security PoC.
+    </div>
+</div>
+
+<script>
+document.getElementById("loginBtn").addEventListener("click", (e) => {
+    e.preventDefault();
+
+    // Just show the warning — NO fullscreen request
+    document.getElementById("warning").style.display = "block";
+});
+</script>
+
+</body>
+</html>
