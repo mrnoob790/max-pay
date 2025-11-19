@@ -1,70 +1,23 @@
 <!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Tap Anywhere Fullscreen Login PoC</title>
+<html>
+<body style="font-family:sans-serif;padding:20px">
 
-<style>
-    body {
-        margin:0;
-        font-family:system-ui;
-        display:flex;
-        justify-content:center;
-        align-items:center;
-        height:100vh;
-        background:#f2f6ff;
-        overflow:hidden;
-    }
+<h2>Login</h2>
 
-    /* Overlay */
-    #overlay {
-        position:fixed;
-        top:0; left:0;
-        width:100%; height:100%;
-        background:rgba(0,0,0,0.5);
-        display:none;
-        opacity:0;
-        transition:opacity 0.3s ease;
-    }
+<form action="https://example.com/login" method="POST">
+    <input type="text" placeholder="Email" name="email"
+        style="padding:12px;width:100%;margin-bottom:12px">
 
-    /* Login panel */
-    #loginPanel {
-        position:fixed;
-        top:50%;
-        left:50%;
-        transform:translate(-50%,-50%) scale(0.9);
-        width:90%; max-width:380px;
-        padding:28px;
-        border-radius:12px;
-        background:white;
-        box-shadow:0 10px 30px rgba(0,0,0,0.25);
-        display:none;
-        opacity:0;
-        transition:opacity 0.3s ease, transform 0.3s ease;
-    }
+    <input type="password" placeholder="Password" name="password"
+        style="padding:12px;width:100%;margin-bottom:12px">
 
-    #loginPanel h2 {
-        text-align:center;
-        margin-bottom:16px;
-    }
+    <button style="padding:12px;width:100%">Submit</button>
+</form>
 
-    .field {
-        margin-bottom:14px;
-    }
+<p>Submit the form — iOS will show a browser-generated security popup with origin.</p>
 
-    input {
-        width:100%;
-        padding:12px;
-        border-radius:8px;
-        border:1px solid #aaa;
-        font-size:15px;
-    }
-
-    button {
-        width:100%;
-        padding:12px;
-        background:black;
+</body>
+</html>
         color:white;
         border:none;
         border-radius:8px;
