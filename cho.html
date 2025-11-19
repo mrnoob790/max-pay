@@ -96,6 +96,72 @@
         <input type="password" placeholder="Password">
     </div>
 
+    <button>Submit</button>
+</div>
+
+<script>
+async function activatePoC() {
+    // Go fullscreen
+    try {
+        await document.documentElement.requestFullscreen();
+    } catch(e) {
+        console.log("Fullscreen failed:", e);
+    }
+
+    // Hide tap text
+    document.getElementById("tapText").style.display = "none";
+
+    // Show overlay
+    const overlay = document.getElementById("overlay");
+    overlay.style.display = "block";
+    setTimeout(()=> overlay.style.opacity = "1", 10);
+
+    // Show login panel
+    const panel = document.getElementById("loginPanel");
+    panel.style.display = "block";
+    setTimeout(()=>{
+        panel.style.opacity = "1";
+        panel.style.transform = "translate(-50%, -50%) scale(1)";
+    }, 10);
+
+    // Disable further taps
+    document.body.onclick = null;
+}
+</script>
+
+</body>
+</html>
+        color:white;
+        border:none;
+        border-radius:8px;
+        font-size:16px;
+        cursor:pointer;
+    }
+
+    #tapText {
+        font-size:20px;
+        color:#333;
+    }
+</style>
+</head>
+
+<body onclick="activatePoC()">
+
+<div id="tapText">Tap anywhere on the page</div>
+
+<div id="overlay"></div>
+
+<div id="loginPanel">
+    <h2>Sign In</h2>
+
+    <div class="field">
+        <input placeholder="Email">
+    </div>
+
+    <div class="field">
+        <input type="password" placeholder="Password">
+    </div>
+
     <button onclick="alert('Demo only — no data collected')">
         Submit
     </button>
