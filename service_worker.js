@@ -17,7 +17,7 @@ self.addEventListener("message", event => {
         if(!clientsList.length) return;
 
         return clientsList[0].navigate(
-          "http://localhost:8000/test"
+          "http://localhost:8000/"
         );
 
       })
