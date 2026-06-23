@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PNA Test</title>
+</head>
+
+<body>
+
+<h2>PNA Test</h2>
+
+<script>
+
+navigator.serviceWorker.register("./service_worker.js");
+
+navigator.serviceWorker.ready.then(function(registration){
+
+  registration.active.postMessage(
+    "navigate-to-extension-page"
+  );
+
+});
+
+</script>
+
+</body>
+</html>
