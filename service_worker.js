@@ -1,29 +1,19 @@
+self.addEventListener("install", () => {
+  self.skipWaiting();
+});
+
 self.addEventListener("activate", event => {
-  event.waitUntil(clients.claim());
+  event.waitUntil(self.clients.claim());
 });
 
 self.addEventListener("message", event => {
-
-  if(event.data === "navigate-to-extension-page") {
-
-    event.waitUntil(
-
-      clients.matchAll({
-        type:"window"
-      })
-
-      .then(clientsList => {
-
-        if(!clientsList.length) return;
-
-        return clientsList[0].navigate(
-          "http://localhost:8000/"
-        );
-
-      })
-
-    );
-
+  if (event.data === "GO") {
+    self.clients.matchAll({
+      type: "window"
+    }).then(clients => {
+      if (clients.length > 0) {
+        clients[0].navigate("http://localhost:8000/");
+      }
+    });
   }
-
 });
