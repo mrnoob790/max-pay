@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Arc LNA Test</title>
+</head>
+<body>
+  <h1>Arc LNA Test</h1>
+
+  <button id="test">Navigate to localhost</button>
+  <p id="status">Loading...</p>
+
+  <script>
+    async function setup() {
+      try {
+        await navigator.serviceWorker.register("./service_worker.js");
+        await navigator.serviceWorker.ready;
+
+        document.getElementById("status").textContent =
+          "Service Worker ready. Reload this page once.";
+      } catch (e) {
+        document.getElementById("status").textContent =
+          "SW ERROR: " + e;
+      }
+    }
+
+    document.getElementById("test").addEventListener("click", () => {
+      if (!navigator.serviceWorker.controller) {
+        document.getElementById("status").textContent =
+          "Reload the page once, then press the button.";
+        return;
+      }
+
+      document.getElementById("status").textContent =
+        "Sending client.navigate() to localhost...";
+
+      navigator.serviceWorker.controller.postMessage("GO");
+    });
+
+    setup();
+  </script>
+</body>
+</html>
