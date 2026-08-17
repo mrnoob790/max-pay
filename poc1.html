@@ -1,43 +1,47 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Arc LNA Test</title>
+  <title>Arc LNA Read Test</title>
 </head>
 <body>
-  <h1>Arc LNA Test</h1>
 
-  <button id="test">Navigate to localhost</button>
-  <p id="status">Loading...</p>
+<h2>Arc Localhost Read Test</h2>
 
-  <script>
-    async function setup() {
-      try {
-        await navigator.serviceWorker.register("./service_worker.js");
-        await navigator.serviceWorker.ready;
+<button onclick="testRead()">TEST READ LOCALHOST</button>
 
-        document.getElementById("status").textContent =
-          "Service Worker ready. Reload this page once.";
-      } catch (e) {
-        document.getElementById("status").textContent =
-          "SW ERROR: " + e;
+<pre id="result">Waiting...</pre>
+
+<script>
+async function testRead() {
+  const result = document.getElementById("result");
+
+  result.textContent =
+    "Trying to read http://localhost:8000/secret ...";
+
+  try {
+    const response = await fetch(
+      "http://localhost:8000/secret",
+      {
+        cache: "no-store"
       }
-    }
+    );
 
-    document.getElementById("test").addEventListener("click", () => {
-      if (!navigator.serviceWorker.controller) {
-        document.getElementById("status").textContent =
-          "Reload the page once, then press the button.";
-        return;
-      }
+    const text = await response.text();
 
-      document.getElementById("status").textContent =
-        "Sending client.navigate() to localhost...";
+    result.textContent =
+      "READ SUCCESS!\n\n" +
+      "HTTP " + response.status + "\n" +
+      "Response: " + text;
 
-      navigator.serviceWorker.controller.postMessage("GO");
-    });
+  } catch (e) {
 
-    setup();
-  </script>
+    result.textContent =
+      "READ FAILED\n\n" +
+      String(e);
+  }
+}
+</script>
+
 </body>
 </html>
