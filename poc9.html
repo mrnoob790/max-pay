@@ -3,8 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <title>Clipboard Fullscreen Loop Test</title>
+  <title>Async Clipboard Fullscreen Test</title>
 
   <style>
     html, body {
@@ -29,7 +28,7 @@
       color: white;
     }
 
-    button {
+    #go {
       font-size: 22px;
       padding: 18px 28px;
     }
@@ -39,7 +38,7 @@
       left: 10px;
       right: 10px;
       bottom: 10px;
-      max-height: 35%;
+      max-height: 40%;
       overflow: auto;
       padding: 12px;
       background: rgba(0,0,0,.85);
@@ -54,7 +53,7 @@
 <body>
 
 <div id="stage">
-  <button id="direct">Direct Write</button>
+  <button id="go">Write text</button>
 </div>
 
 <div id="status">Ready...</div>
@@ -62,121 +61,110 @@
 <script>
 
 const stage = document.getElementById("stage");
-const button = document.getElementById("direct");
+const button = document.getElementById("go");
 const status = document.getElementById("status");
 
 let running = false;
-let attempt = 0;
+let count = 0;
 
 function log(text) {
   status.textContent += "\n" + text;
   status.scrollTop = status.scrollHeight;
 }
 
-async function writeTextTest() {
+async function clipboardLoop() {
 
-  attempt++;
+  while (running) {
 
-  try {
+    count++;
 
-    await navigator.clipboard.writeText(
-      "ARC CLIPBOARD TEST"
-    );
+    try {
 
-    log(
-      "[" + attempt + "] writeText SUCCESS"
-    );
+      await navigator.clipboard.writeText(
+        "ARC CLIPBOARD TEST"
+      );
 
-  } catch (e) {
+      log("WRITE #" + count + " SUCCESS");
 
-    log(
-      "[" + attempt + "] writeText FAILED: " +
-      e.name + " - " + e.message
+    } catch (e) {
+
+      log(
+        "WRITE #" + count +
+        " FAILED: " +
+        e.name +
+        " - " +
+        e.message
+      );
+    }
+
+    await new Promise(resolve =>
+      setTimeout(resolve, 1000)
     );
   }
 }
 
 
-async function startTest() {
+button.addEventListener("click", async () => {
 
   if (running)
     return;
 
   running = true;
 
-  status.textContent = "TEST STARTED";
-
   /*
-   * First write happens directly from the
-   * original user click.
+   * STEP 1:
+   * Start the async clipboard loop.
    */
-  log("Initial async writeText()...");
+  log("ASYNC CLIPBOARD LOOP STARTED");
 
-  await writeTextTest();
-
+  clipboardLoop();
 
   /*
+   * STEP 2:
    * Then request fullscreen.
    */
-  log("Requesting fullscreen...");
-
   try {
 
     await stage.requestFullscreen({
       navigationUI: "hide"
     });
 
+    log("FULLSCREEN REQUESTED");
+
   } catch (e) {
 
     log(
-      "Fullscreen failed: " +
-      e.name + " - " + e.message
+      "FULLSCREEN FAILED: " +
+      e.name +
+      " - " +
+      e.message
     );
+  }
 
+});
+
+
+document.addEventListener("fullscreenchange", () => {
+
+  const active =
+    document.fullscreenElement === stage;
+
+  stage.classList.toggle("fs", active);
+
+  if (active) {
+
+    log("FULLSCREEN ENTERED");
+
+  } else {
+
+    log("FULLSCREEN EXITED");
     running = false;
-    return;
+
   }
 
-
-  /*
-   * Continue attempting writes while the page
-   * remains open.
-   */
-  while (running) {
-
-    await new Promise(resolve =>
-      setTimeout(resolve, 1000)
-    );
-
-    await writeTextTest();
-  }
-}
+});
 
 
-button.addEventListener("click", startTest);
-
-
-document.addEventListener(
-  "fullscreenchange",
-  () => {
-
-    const active =
-      document.fullscreenElement === stage;
-
-    stage.classList.toggle("fs", active);
-
-    if (active) {
-      log("FULLSCREEN ENTERED");
-    } else {
-      log("FULLSCREEN EXITED");
-    }
-  }
-);
-
-
-/*
- * Stop when the page is being unloaded.
- */
 window.addEventListener("beforeunload", () => {
   running = false;
 });
