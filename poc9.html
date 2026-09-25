@@ -1,71 +1,25 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Copy Test</title>
-
-  <style>
-    html, body {
-      margin: 0;
-      height: 100%;
-      font-family: sans-serif;
-    }
-
-    #stage {
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    button {
-      font-size: 22px;
-      padding: 18px 28px;
-    }
-
-    #status {
-      position: fixed;
-      bottom: 20px;
-      left: 10px;
-      right: 10px;
-      text-align: center;
-      font-family: monospace;
-    }
-  </style>
-</head>
-
-<body>
-
-<div id="stage">
-  <button id="copy">Tap to continue</button>
-</div>
-
-<div id="status">Ready</div>
-
+<!doctype html>
+<html><head><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fullscreen Clipboard Test</title>
+<style>
+html,body{margin:0;width:100%;height:100%;font-family:sans-serif}
+#stage{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#fff}
+#stage.fs{background:#111;color:#fff}#go{font-size:22px;padding:18px 28px;z-index:5}
+#spoof{display:none;position:absolute;top:0;left:0;right:0;height:56px;background:#fff;color:#202124;border-bottom:1px solid #dadce0;line-height:56px;padding-left:12px;font-size:14px;z-index:10}
+#stage.fs #spoof{display:block}#status{position:absolute;left:8px;right:8px;bottom:8px;padding:12px;background:rgba(0,0,0,.85);color:#00ff00;font:12px monospace;white-space:pre-wrap;word-break:break-word;z-index:20}
+</style></head><body>
+<div id="stage"><div id="spoof">🔒&nbsp; https://accounts.example-bank.com</div><button id="go">Tap to continue</button><div id="status">Ready...</div></div>
 <script>
-const button = document.getElementById("copy");
-const status = document.getElementById("status");
-
-button.addEventListener("click", async () => {
-
-  const text = button.textContent.trim();
-
-  try {
-    await navigator.clipboard.writeText(text);
-
-    status.textContent = "Copied: " + text;
-
-  } catch (e) {
-
-    status.textContent =
-      "Copy failed: " +
-      e.name +
-      " - " +
-      e.message;
-  }
-
+const stage=document.getElementById("stage"),button=document.getElementById("go"),status=document.getElementById("status");
+function log(s){status.textContent+="\n"+s}
+log("Protocol: "+location.protocol);log("Secure: "+window.isSecureContext);log("Clipboard: "+typeof navigator.clipboard);
+button.onclick=async()=>{status.textContent="BUTTON CLICKED";try{await stage.requestFullscreen({navigationUI:"hide"});log("Fullscreen request resolved")}catch(e){log("Fullscreen failed: "+e.name+" - "+e.message)}};
+document.addEventListener("fullscreenchange",async()=>{
+ if(document.fullscreenElement!==stage){log("Fullscreen exited");return}
+ stage.classList.add("fs");log("FULLSCREEN ENTERED");log("Clipboard: "+typeof navigator.clipboard);
+ await new Promise(r=>setTimeout(r,200));
+ if(!navigator.clipboard){log("CLIPBOARD API UNAVAILABLE");return}
+ try{await navigator.clipboard.writeText(button.textContent.trim());log("COPY SUCCESS: "+button.textContent.trim())}
+ catch(e){log("COPY FAILED\nName: "+e.name+"\nMessage: "+e.message)}
 });
-</script>
-
-</body>
-</html>
+</script></body></html>
