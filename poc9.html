@@ -1,25 +1,166 @@
-<!doctype html>
-<html><head><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Fullscreen Clipboard Test</title>
-<style>
-html,body{margin:0;width:100%;height:100%;font-family:sans-serif}
-#stage{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#fff}
-#stage.fs{background:#111;color:#fff}#go{font-size:22px;padding:18px 28px;z-index:5}
-#spoof{display:none;position:absolute;top:0;left:0;right:0;height:56px;background:#fff;color:#202124;border-bottom:1px solid #dadce0;line-height:56px;padding-left:12px;font-size:14px;z-index:10}
-#stage.fs #spoof{display:block}#status{position:absolute;left:8px;right:8px;bottom:8px;padding:12px;background:rgba(0,0,0,.85);color:#00ff00;font:12px monospace;white-space:pre-wrap;word-break:break-word;z-index:20}
-</style></head><body>
-<div id="stage"><div id="spoof">🔒&nbsp; https://accounts.example-bank.com</div><button id="go">Tap to continue</button><div id="status">Ready...</div></div>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Fullscreen Clipboard Test</title>
+
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      font-family: sans-serif;
+    }
+
+    #stage {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: white;
+    }
+
+    #stage.fs {
+      background: #111;
+      color: white;
+    }
+
+    #go {
+      font-size: 22px;
+      padding: 18px 28px;
+    }
+
+    #status {
+      position: fixed;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      padding: 12px;
+      background: rgba(0,0,0,.85);
+      color: #00ff00;
+      font: 13px monospace;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="stage">
+
+  <button id="go">Write text</button>
+
+  <div id="status">Ready...</div>
+
+</div>
+
 <script>
-const stage=document.getElementById("stage"),button=document.getElementById("go"),status=document.getElementById("status");
-function log(s){status.textContent+="\n"+s}
-log("Protocol: "+location.protocol);log("Secure: "+window.isSecureContext);log("Clipboard: "+typeof navigator.clipboard);
-button.onclick=async()=>{status.textContent="BUTTON CLICKED";try{await stage.requestFullscreen({navigationUI:"hide"});log("Fullscreen request resolved")}catch(e){log("Fullscreen failed: "+e.name+" - "+e.message)}};
-document.addEventListener("fullscreenchange",async()=>{
- if(document.fullscreenElement!==stage){log("Fullscreen exited");return}
- stage.classList.add("fs");log("FULLSCREEN ENTERED");log("Clipboard: "+typeof navigator.clipboard);
- await new Promise(r=>setTimeout(r,200));
- if(!navigator.clipboard){log("CLIPBOARD API UNAVAILABLE");return}
- try{await navigator.clipboard.writeText(button.textContent.trim());log("COPY SUCCESS: "+button.textContent.trim())}
- catch(e){log("COPY FAILED\nName: "+e.name+"\nMessage: "+e.message)}
+
+const stage = document.getElementById("stage");
+const button = document.getElementById("go");
+const status = document.getElementById("status");
+
+function log(text) {
+  status.textContent += "\n" + text;
+}
+
+
+/*
+ * User clicks button.
+ * Only fullscreen is requested here.
+ */
+button.addEventListener("click", async () => {
+
+  status.textContent = "Button clicked";
+
+  try {
+
+    await stage.requestFullscreen({
+      navigationUI: "hide"
+    });
+
+    log("Fullscreen request completed");
+
+  } catch (e) {
+
+    log("Fullscreen failed");
+    log("Name: " + e.name);
+    log("Message: " + e.message);
+
+  }
+
 });
-</script></body></html>
+
+
+/*
+ * Fullscreen transition completed.
+ */
+document.addEventListener("fullscreenchange", async () => {
+
+  const entered =
+    document.fullscreenElement === stage;
+
+  stage.classList.toggle("fs", entered);
+
+  if (!entered) {
+    log("Fullscreen exited");
+    return;
+  }
+
+  log("FULLSCREEN ENTERED");
+
+  /*
+   * Wait approximately 500 ms after fullscreen.
+   */
+  await new Promise(resolve => {
+    setTimeout(resolve, 500);
+  });
+
+  log("500 ms elapsed");
+
+  log(
+    "Secure context: " +
+    window.isSecureContext
+  );
+
+  log(
+    "Clipboard API: " +
+    typeof navigator.clipboard
+  );
+
+  if (!navigator.clipboard) {
+
+    log("Clipboard API unavailable");
+    return;
+  }
+
+  try {
+
+    /*
+     * Fixed test value only.
+     * Does NOT read the existing clipboard.
+     */
+    await navigator.clipboard.writeText(
+      "Fullscreen clipboard test"
+    );
+
+    log("WRITE TEXT SUCCESS");
+
+  } catch (e) {
+
+    log("WRITE TEXT FAILED");
+    log("Name: " + e.name);
+    log("Message: " + e.message);
+
+  }
+
+});
+
+</script>
+
+</body>
+</html>
