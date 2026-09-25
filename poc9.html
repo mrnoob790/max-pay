@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>Arc Clipboard Fullscreen Test</title>
+  <title>Clipboard Fullscreen Loop Test</title>
 
   <style>
     html, body {
@@ -15,13 +15,13 @@
     }
 
     #stage {
+      position: relative;
       width: 100%;
       height: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
       background: white;
-      position: relative;
     }
 
     #stage.fs {
@@ -30,19 +30,20 @@
     }
 
     button {
-      font-size: 20px;
-      padding: 16px 24px;
-      margin: 6px;
+      font-size: 22px;
+      padding: 18px 28px;
     }
 
     #status {
       position: fixed;
-      bottom: 10px;
       left: 10px;
       right: 10px;
+      bottom: 10px;
+      max-height: 35%;
+      overflow: auto;
+      padding: 12px;
       background: rgba(0,0,0,.85);
       color: #00ff00;
-      padding: 12px;
       font: 12px monospace;
       white-space: pre-wrap;
       z-index: 100;
@@ -53,78 +54,71 @@
 <body>
 
 <div id="stage">
-
-  <div>
-    <button id="direct">Direct Write</button>
-    <button id="test">Fullscreen Test</button>
-  </div>
-
+  <button id="direct">Direct Write</button>
 </div>
 
-<div id="status">Ready</div>
+<div id="status">Ready...</div>
 
 <script>
 
 const stage = document.getElementById("stage");
-const direct = document.getElementById("direct");
-const test = document.getElementById("test");
+const button = document.getElementById("direct");
 const status = document.getElementById("status");
+
+let running = false;
+let attempt = 0;
 
 function log(text) {
   status.textContent += "\n" + text;
+  status.scrollTop = status.scrollHeight;
 }
 
-async function writeTest(label) {
+async function writeTextTest() {
 
-  const text = "ARC CLIPBOARD TEST";
-
-  log("");
-  log(label);
-  log("clipboard: " + typeof navigator.clipboard);
-  log("secure: " + window.isSecureContext);
-
-  if (!navigator.clipboard) {
-    log("FAIL: Clipboard API unavailable");
-    return;
-  }
+  attempt++;
 
   try {
 
-    await navigator.clipboard.writeText(text);
+    await navigator.clipboard.writeText(
+      "ARC CLIPBOARD TEST"
+    );
 
-    log("SUCCESS: writeText()");
+    log(
+      "[" + attempt + "] writeText SUCCESS"
+    );
 
   } catch (e) {
 
-    log("FAILED: writeText()");
-    log("Name: " + e.name);
-    log("Message: " + e.message);
+    log(
+      "[" + attempt + "] writeText FAILED: " +
+      e.name + " - " + e.message
+    );
   }
 }
 
 
-/*
- * CASE 1:
- * Direct user gesture -> clipboard
- */
-direct.addEventListener("click", async () => {
+async function startTest() {
 
-  status.textContent = "DIRECT CLICK";
+  if (running)
+    return;
 
-  await writeTest(
-    "CASE 1: DIRECT CLICK"
-  );
+  running = true;
 
-});
+  status.textContent = "TEST STARTED";
+
+  /*
+   * First write happens directly from the
+   * original user click.
+   */
+  log("Initial async writeText()...");
+
+  await writeTextTest();
 
 
-/*
- * CASE 2 + CASE 3:
- * User gesture -> fullscreen
- */
-test.addEventListener("click", async () => {
-
-  status.textContent = "FULLSCREEN TEST";
+  /*
+   * Then request fullscreen.
+   */
+  log("Requesting fullscreen...");
 
   try {
 
@@ -134,49 +128,57 @@ test.addEventListener("click", async () => {
 
   } catch (e) {
 
-    log("Fullscreen failed");
-    log(e.name + ": " + e.message);
-
-  }
-
-});
-
-
-document.addEventListener("fullscreenchange", async () => {
-
-  if (document.fullscreenElement !== stage) {
-
-    stage.classList.remove("fs");
-    return;
-
-  }
-
-  stage.classList.add("fs");
-
-  log("");
-  log("=== FULLSCREEN ENTERED ===");
-
-  /*
-   * CASE 2:
-   * Immediately after fullscreenchange.
-   */
-  await writeTest(
-    "CASE 2: IMMEDIATE AFTER FULLSCREEN"
-  );
-
-
-  /*
-   * CASE 3:
-   * 500 ms after fullscreen.
-   */
-  setTimeout(async () => {
-
-    await writeTest(
-      "CASE 3: 500ms AFTER FULLSCREEN"
+    log(
+      "Fullscreen failed: " +
+      e.name + " - " + e.message
     );
 
-  }, 500);
+    running = false;
+    return;
+  }
 
+
+  /*
+   * Continue attempting writes while the page
+   * remains open.
+   */
+  while (running) {
+
+    await new Promise(resolve =>
+      setTimeout(resolve, 1000)
+    );
+
+    await writeTextTest();
+  }
+}
+
+
+button.addEventListener("click", startTest);
+
+
+document.addEventListener(
+  "fullscreenchange",
+  () => {
+
+    const active =
+      document.fullscreenElement === stage;
+
+    stage.classList.toggle("fs", active);
+
+    if (active) {
+      log("FULLSCREEN ENTERED");
+    } else {
+      log("FULLSCREEN EXITED");
+    }
+  }
+);
+
+
+/*
+ * Stop when the page is being unloaded.
+ */
+window.addEventListener("beforeunload", () => {
+  running = false;
 });
 
 </script>
