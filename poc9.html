@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Copy Test</title>
+
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      font-family: sans-serif;
+    }
+
+    #stage {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    button {
+      font-size: 22px;
+      padding: 18px 28px;
+    }
+
+    #status {
+      position: fixed;
+      bottom: 20px;
+      left: 10px;
+      right: 10px;
+      text-align: center;
+      font-family: monospace;
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="stage">
+  <button id="copy">Tap to continue</button>
+</div>
+
+<div id="status">Ready</div>
+
+<script>
+const button = document.getElementById("copy");
+const status = document.getElementById("status");
+
+button.addEventListener("click", async () => {
+
+  const text = button.textContent.trim();
+
+  try {
+    await navigator.clipboard.writeText(text);
+
+    status.textContent = "Copied: " + text;
+
+  } catch (e) {
+
+    status.textContent =
+      "Copy failed: " +
+      e.name +
+      " - " +
+      e.message;
+  }
+
+});
+</script>
+
+</body>
+</html>
