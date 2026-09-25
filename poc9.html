@@ -1,72 +1,378 @@
-<button id="asyncBtn">Start Async Test</button>
-<button id="fullscreenBtn">Enter Fullscreen</button>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fullscreen Async Clipboard Test</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f2f2f2;
+    }
+
+    .top {
+      padding: 20px;
+      background: #111;
+      color: white;
+    }
+
+    button {
+      padding: 14px 18px;
+      margin: 8px 4px;
+      border: 0;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    #fullscreenBtn {
+      background: #2563eb;
+      color: white;
+    }
+
+    #asyncBtn {
+      background: #16a34a;
+      color: white;
+    }
+
+    #loginPanel {
+      display: none;
+      width: 90%;
+      max-width: 360px;
+      margin: 80px auto;
+      padding: 25px;
+      box-sizing: border-box;
+      background: white;
+      border-radius: 14px;
+      box-shadow: 0 10px 40px rgba(0,0,0,.25);
+    }
+
+    #loginPanel h2 {
+      margin-top: 0;
+    }
+
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 13px;
+      margin: 8px 0;
+      border: 1px solid #bbb;
+      border-radius: 7px;
+      font-size: 16px;
+    }
+
+    #loginBtn {
+      width: 100%;
+      background: #111;
+      color: white;
+      margin-top: 10px;
+    }
+
+    #log {
+      padding: 15px;
+      font-size: 13px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    #page {
+      min-height: 150vh;
+      padding: 20px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="top">
+  <h2>Async Clipboard Test</h2>
+
+  <button id="asyncBtn">
+    Start Async Test
+  </button>
+
+  <button id="fullscreenBtn">
+    Enter Fullscreen
+  </button>
+</div>
+
+<div id="page">
+
+  <div id="loginPanel">
+    <h2>Sign in</h2>
+
+    <input
+      id="username"
+      type="text"
+      placeholder="Username"
+      autocomplete="off"
+    >
+
+    <input
+      id="password"
+      type="password"
+      placeholder="Password"
+      autocomplete="off"
+    >
+
+    <button id="loginBtn">
+      Login
+    </button>
+  </div>
+
+  <div id="log"></div>
+
+</div>
 
 <script>
 let running = false;
 
-async function asyncWrite() {
+const TEST_TEXT = "ARC CLIPBOARD TEST";
+
+function log(message) {
+  console.log(message);
+
+  const box = document.getElementById("log");
+  box.textContent += message + "\n";
+}
+
+async function asyncWrite(source) {
   try {
-    await navigator.clipboard.writeText("ARC CLIPBOARD TEST");
-    console.log("[+] Clipboard write succeeded");
+    if (!navigator.clipboard) {
+      log("[-] Clipboard API unavailable (" + source + ")");
+      return;
+    }
+
+    await navigator.clipboard.writeText(TEST_TEXT);
+
+    log("[+] Async write succeeded: " + source);
+
   } catch (e) {
-    console.log("[-] Clipboard write failed:", e.name, e.message);
+    log(
+      "[-] Async write failed: " +
+      source +
+      " | " +
+      e.name +
+      ": " +
+      e.message
+    );
   }
 }
 
 async function clipboardLoop() {
   while (running) {
-    await asyncWrite();
-    await new Promise(r => setTimeout(r, 1000));
+    await asyncWrite("loop");
+
+    await new Promise(resolve => {
+      setTimeout(resolve, 1000);
+    });
   }
 }
 
-// Async test start
+
+/*
+ * START ASYNC TEST
+ */
 document.getElementById("asyncBtn").addEventListener("click", () => {
-  if (running) return;
+
+  if (running) {
+    log("[*] Async test already running");
+    return;
+  }
 
   running = true;
-  clipboardLoop();
 
-  console.log("[+] Async clipboard loop started");
+  log("[+] Async test started");
+
+  clipboardLoop();
 });
 
-// Separate fullscreen button
+
+/*
+ * FULLSCREEN BUTTON
+ *
+ * Async write is attempted BEFORE fullscreen,
+ * then fullscreen is requested.
+ */
 document.getElementById("fullscreenBtn").addEventListener("click", async () => {
+
+  await asyncWrite("fullscreen-button");
+
   try {
+
     await document.documentElement.requestFullscreen({
       navigationUI: "hide"
     });
-    console.log("[+] Fullscreen entered");
+
+    document.getElementById("loginPanel").style.display = "block";
+
+    log("[+] Fullscreen entered");
+
   } catch (e) {
-    console.log("[-] Fullscreen failed:", e);
+
+    log(
+      "[-] Fullscreen failed: " +
+      e.name +
+      ": " +
+      e.message
+    );
+
   }
+
 });
 
-// Any touch/click on the page attempts one async write.
-// It does NOT read the existing clipboard.
-document.addEventListener("pointerdown", () => {
-  if (running) {
-    asyncWrite();
-  }
+
+/*
+ * ANY PAGE TOUCH / CLICK
+ */
+document.addEventListener("pointerdown", event => {
+
+  if (!running) return;
+
+  asyncWrite("pointerdown");
+
 }, true);
 
-// Also handle touch explicitly
-document.addEventListener("touchstart", () => {
-  if (running) {
-    asyncWrite();
-  }
-}, {capture: true, passive: true});
 
-// Stop loop when fullscreen exits / page is closed
-document.addEventListener("fullscreenchange", () => {
-  console.log(
-    document.fullscreenElement
-      ? "[+] Fullscreen active"
-      : "[-] Fullscreen exited"
-  );
+/*
+ * TOUCH START
+ */
+document.addEventListener("touchstart", event => {
+
+  if (!running) return;
+
+  asyncWrite("touchstart");
+
+}, {
+  capture: true,
+  passive: true
 });
 
+
+/*
+ * SWIPE / SCROLL
+ */
+document.addEventListener("scroll", () => {
+
+  if (!running) return;
+
+  asyncWrite("scroll");
+
+}, {
+  capture: true,
+  passive: true
+});
+
+
+/*
+ * TOUCH MOVE
+ * Useful for swipe testing.
+ */
+document.addEventListener("touchmove", () => {
+
+  if (!running) return;
+
+  asyncWrite("touchmove");
+
+}, {
+  capture: true,
+  passive: true
+});
+
+
+/*
+ * LOGIN PANEL TOUCH
+ */
+document.getElementById("loginPanel").addEventListener("pointerdown", () => {
+
+  if (!running) return;
+
+  asyncWrite("login-panel-touch");
+
+}, true);
+
+
+/*
+ * INPUT FOCUS
+ */
+document.querySelectorAll("input").forEach(input => {
+
+  input.addEventListener("focus", () => {
+
+    if (!running) return;
+
+    asyncWrite("input-focus");
+
+  });
+
+});
+
+
+/*
+ * KEYBOARD INPUT
+ */
+document.querySelectorAll("input").forEach(input => {
+
+  input.addEventListener("input", event => {
+
+    if (!running) return;
+
+    asyncWrite("keyboard-input");
+
+  });
+
+});
+
+
+/*
+ * KEYDOWN
+ */
+document.addEventListener("keydown", event => {
+
+  if (!running) return;
+
+  asyncWrite("keydown");
+
+}, true);
+
+
+/*
+ * LOGIN BUTTON
+ */
+document.getElementById("loginBtn").addEventListener("click", () => {
+
+  if (!running) return;
+
+  asyncWrite("login-button");
+
+});
+
+
+/*
+ * FULLSCREEN STATE
+ */
+document.addEventListener("fullscreenchange", () => {
+
+  if (document.fullscreenElement) {
+
+    log("[+] Fullscreen ACTIVE");
+
+  } else {
+
+    log("[-] Fullscreen EXITED");
+
+  }
+
+});
+
+
+/*
+ * STOP LOOP WHEN PAGE CLOSES
+ */
 window.addEventListener("beforeunload", () => {
   running = false;
 });
 </script>
+
+</body>
+</html>
