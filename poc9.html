@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>Fullscreen Clipboard Test</title>
+  <title>Arc Clipboard Fullscreen Test</title>
 
   <style>
     html, body {
@@ -15,13 +15,13 @@
     }
 
     #stage {
-      position: relative;
       width: 100%;
       height: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
       background: white;
+      position: relative;
     }
 
     #stage.fs {
@@ -29,21 +29,23 @@
       color: white;
     }
 
-    #go {
-      font-size: 22px;
-      padding: 18px 28px;
+    button {
+      font-size: 20px;
+      padding: 16px 24px;
+      margin: 6px;
     }
 
     #status {
       position: fixed;
+      bottom: 10px;
       left: 10px;
       right: 10px;
-      bottom: 10px;
-      padding: 12px;
       background: rgba(0,0,0,.85);
       color: #00ff00;
-      font: 13px monospace;
+      padding: 12px;
+      font: 12px monospace;
       white-space: pre-wrap;
+      z-index: 100;
     }
   </style>
 </head>
@@ -52,30 +54,77 @@
 
 <div id="stage">
 
-  <button id="go">Write text</button>
-
-  <div id="status">Ready...</div>
+  <div>
+    <button id="direct">Direct Write</button>
+    <button id="test">Fullscreen Test</button>
+  </div>
 
 </div>
+
+<div id="status">Ready</div>
 
 <script>
 
 const stage = document.getElementById("stage");
-const button = document.getElementById("go");
+const direct = document.getElementById("direct");
+const test = document.getElementById("test");
 const status = document.getElementById("status");
 
 function log(text) {
   status.textContent += "\n" + text;
 }
 
+async function writeTest(label) {
+
+  const text = "ARC CLIPBOARD TEST";
+
+  log("");
+  log(label);
+  log("clipboard: " + typeof navigator.clipboard);
+  log("secure: " + window.isSecureContext);
+
+  if (!navigator.clipboard) {
+    log("FAIL: Clipboard API unavailable");
+    return;
+  }
+
+  try {
+
+    await navigator.clipboard.writeText(text);
+
+    log("SUCCESS: writeText()");
+
+  } catch (e) {
+
+    log("FAILED: writeText()");
+    log("Name: " + e.name);
+    log("Message: " + e.message);
+  }
+}
+
 
 /*
- * User clicks button.
- * Only fullscreen is requested here.
+ * CASE 1:
+ * Direct user gesture -> clipboard
  */
-button.addEventListener("click", async () => {
+direct.addEventListener("click", async () => {
 
-  status.textContent = "Button clicked";
+  status.textContent = "DIRECT CLICK";
+
+  await writeTest(
+    "CASE 1: DIRECT CLICK"
+  );
+
+});
+
+
+/*
+ * CASE 2 + CASE 3:
+ * User gesture -> fullscreen
+ */
+test.addEventListener("click", async () => {
+
+  status.textContent = "FULLSCREEN TEST";
 
   try {
 
@@ -83,80 +132,50 @@ button.addEventListener("click", async () => {
       navigationUI: "hide"
     });
 
-    log("Fullscreen request completed");
-
   } catch (e) {
 
     log("Fullscreen failed");
-    log("Name: " + e.name);
-    log("Message: " + e.message);
+    log(e.name + ": " + e.message);
 
   }
 
 });
 
 
-/*
- * Fullscreen transition completed.
- */
 document.addEventListener("fullscreenchange", async () => {
 
-  const entered =
-    document.fullscreenElement === stage;
+  if (document.fullscreenElement !== stage) {
 
-  stage.classList.toggle("fs", entered);
-
-  if (!entered) {
-    log("Fullscreen exited");
+    stage.classList.remove("fs");
     return;
+
   }
 
-  log("FULLSCREEN ENTERED");
+  stage.classList.add("fs");
+
+  log("");
+  log("=== FULLSCREEN ENTERED ===");
 
   /*
-   * Wait approximately 500 ms after fullscreen.
+   * CASE 2:
+   * Immediately after fullscreenchange.
    */
-  await new Promise(resolve => {
-    setTimeout(resolve, 500);
-  });
-
-  log("100 ms elapsed");
-
-  log(
-    "Secure context: " +
-    window.isSecureContext
+  await writeTest(
+    "CASE 2: IMMEDIATE AFTER FULLSCREEN"
   );
 
-  log(
-    "Clipboard API: " +
-    typeof navigator.clipboard
-  );
 
-  if (!navigator.clipboard) {
+  /*
+   * CASE 3:
+   * 500 ms after fullscreen.
+   */
+  setTimeout(async () => {
 
-    log("Clipboard API unavailable");
-    return;
-  }
-
-  try {
-
-    /*
-     * Fixed test value only.
-     * Does NOT read the existing clipboard.
-     */
-    await navigator.clipboard.writeText(
-      "Fullscreen clipboard test"
+    await writeTest(
+      "CASE 3: 500ms AFTER FULLSCREEN"
     );
 
-    log("WRITE TEXT SUCCESS");
-
-  } catch (e) {
-
-    log("WRITE TEXT FAILED");
-    log("Name: " + e.name);
-    log("Message: " + e.message);
-
-  }
+  }, 500);
 
 });
 
