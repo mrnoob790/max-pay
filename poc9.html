@@ -1,175 +1,72 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Async Clipboard Fullscreen Test</title>
-
-  <style>
-    html, body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      font-family: sans-serif;
-    }
-
-    #stage {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: white;
-    }
-
-    #stage.fs {
-      background: #111;
-      color: white;
-    }
-
-    #go {
-      font-size: 22px;
-      padding: 18px 28px;
-    }
-
-    #status {
-      position: fixed;
-      left: 10px;
-      right: 10px;
-      bottom: 10px;
-      max-height: 40%;
-      overflow: auto;
-      padding: 12px;
-      background: rgba(0,0,0,.85);
-      color: #00ff00;
-      font: 12px monospace;
-      white-space: pre-wrap;
-      z-index: 100;
-    }
-  </style>
-</head>
-
-<body>
-
-<div id="stage">
-  <button id="go">Write text</button>
-</div>
-
-<div id="status">Ready...</div>
+<button id="asyncBtn">Start Async Test</button>
+<button id="fullscreenBtn">Enter Fullscreen</button>
 
 <script>
-
-const stage = document.getElementById("stage");
-const button = document.getElementById("go");
-const status = document.getElementById("status");
-
 let running = false;
-let count = 0;
 
-function log(text) {
-  status.textContent += "\n" + text;
-  status.scrollTop = status.scrollHeight;
+async function asyncWrite() {
+  try {
+    await navigator.clipboard.writeText("ARC CLIPBOARD TEST");
+    console.log("[+] Clipboard write succeeded");
+  } catch (e) {
+    console.log("[-] Clipboard write failed:", e.name, e.message);
+  }
 }
 
 async function clipboardLoop() {
-
   while (running) {
-
-    count++;
-
-    try {
-
-      await navigator.clipboard.writeText(
-        "ARC CLIPBOARD TEST"
-      );
-
-      log("WRITE #" + count + " SUCCESS");
-
-    } catch (e) {
-
-      log(
-        "WRITE #" + count +
-        " FAILED: " +
-        e.name +
-        " - " +
-        e.message
-      );
-    }
-
-    await new Promise(resolve =>
-      setTimeout(resolve, 1000)
-    );
+    await asyncWrite();
+    await new Promise(r => setTimeout(r, 1000));
   }
 }
 
-
-button.addEventListener("click", async () => {
-
-  if (running)
-    return;
+// Async test start
+document.getElementById("asyncBtn").addEventListener("click", () => {
+  if (running) return;
 
   running = true;
-
-  /*
-   * STEP 1:
-   * Start the async clipboard loop.
-   */
-  log("ASYNC CLIPBOARD LOOP STARTED");
-
   clipboardLoop();
 
-  /*
-   * STEP 2:
-   * Then request fullscreen.
-   */
-  try {
+  console.log("[+] Async clipboard loop started");
+});
 
-    await stage.requestFullscreen({
+// Separate fullscreen button
+document.getElementById("fullscreenBtn").addEventListener("click", async () => {
+  try {
+    await document.documentElement.requestFullscreen({
       navigationUI: "hide"
     });
-
-    log("FULLSCREEN REQUESTED");
-
+    console.log("[+] Fullscreen entered");
   } catch (e) {
-
-    log(
-      "FULLSCREEN FAILED: " +
-      e.name +
-      " - " +
-      e.message
-    );
+    console.log("[-] Fullscreen failed:", e);
   }
-
 });
 
+// Any touch/click on the page attempts one async write.
+// It does NOT read the existing clipboard.
+document.addEventListener("pointerdown", () => {
+  if (running) {
+    asyncWrite();
+  }
+}, true);
 
+// Also handle touch explicitly
+document.addEventListener("touchstart", () => {
+  if (running) {
+    asyncWrite();
+  }
+}, {capture: true, passive: true});
+
+// Stop loop when fullscreen exits / page is closed
 document.addEventListener("fullscreenchange", () => {
-
-  const active =
-    document.fullscreenElement === stage;
-
-  stage.classList.toggle("fs", active);
-
-  if (active) {
-
-    log("FULLSCREEN ENTERED");
-
-  } else {
-
-    log("FULLSCREEN EXITED");
-    running = false;
-
-  }
-
+  console.log(
+    document.fullscreenElement
+      ? "[+] Fullscreen active"
+      : "[-] Fullscreen exited"
+  );
 });
-
 
 window.addEventListener("beforeunload", () => {
   running = false;
 });
-
 </script>
-
-</body>
-</html>
